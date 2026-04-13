@@ -46,13 +46,12 @@
     <!-- Move Base导航 -->
     <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
       <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
       <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
       <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
-
+      <rosparam file="$(find multi_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
       <!-- 代价地图坐标系配置 -->
       <param name="global_costmap/global_frame" value="map"/>
       <param name="global_costmap/robot_base_frame" value="robot1_base_footprint"/>
@@ -107,13 +106,12 @@
     <!-- Move Base导航 -->
     <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
       <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
       <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
       <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
-
+      <rosparam file="$(find multi_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
       <!-- 代价地图坐标系配置 -->
       <param name="global_costmap/global_frame" value="map"/>
       <param name="global_costmap/robot_base_frame" value="robot2_base_footprint"/>
@@ -168,13 +166,12 @@
     <!-- Move Base导航 -->
     <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
       <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
       <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
       <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
-
+      <rosparam file="$(find multi_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
       <!-- 代价地图坐标系配置 -->
       <param name="global_costmap/global_frame" value="map"/>
       <param name="global_costmap/robot_base_frame" value="robot3_base_footprint"/>
