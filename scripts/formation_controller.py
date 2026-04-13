@@ -25,7 +25,7 @@ class FormationController:
         # 激光雷达参数（从你的配置文件获取）
         self.scan_angle_min = rospy.get_param('~scan_angle_min', -math.pi)
         self.scan_angle_max = rospy.get_param('~scan_angle_max', math.pi)
-        self.scan_angle_increment = rospy.get_param('~scan_angle_increment', math.pi/36)  # 1度
+        self.scan_angle_increment = rospy.get_param('~scan_angle_increment', math.pi/72)  # 2.5度增量
         self.scan_range_min = rospy.get_param('~scan_range_min', 0.1)
         self.scan_range_max = rospy.get_param('~scan_range_max', 10.0)
 

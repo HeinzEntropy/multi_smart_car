@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Inflated Obstacles1
+        - /Map2
       Splitter Ratio: 0.6526610255241394
     Tree Height: 675
   - Class: rviz/Selection
@@ -240,7 +240,7 @@ Visualization Manager:
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
       Color: 170; 255; 127
-      Enabled: true
+      Enabled: false
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: Pose Array
@@ -250,7 +250,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /robot1/particlecloud
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -521,6 +521,16 @@ Visualization Manager:
       Topic: /robot3/move_base/DWAPlannerROS/global_plan
       Unreliable: false
       Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /robot1/move_base/local_costmap/costmap
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -553,10 +563,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 44.66156768798828
+      Scale: 155.3574981689453
       Target Frame: <Fixed Frame>
-      X: 0.46544715762138367
-      Y: -0.6302730441093445
+      X: 2.6629397869110107
+      Y: -1.532544732093811
     Saved: ~
 Window Geometry:
   Displays:
@@ -575,4 +585,4 @@ Window Geometry:
     collapsed: false
   Width: 1432
   X: 558
-  Y: 187
+  Y: 150
