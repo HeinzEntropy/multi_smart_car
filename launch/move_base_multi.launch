@@ -1,0 +1,52 @@
+<!-- my_smart_car/launch/move_base_multi.launch -->
+<launch>
+  <!-- 机器人命名空间参数 -->
+  <arg name="robot_namespace" default="smart_car"/>
+
+  <!-- 初始位姿参数 -->
+  <arg name="initial_pose_x" default="0.0"/>
+  <arg name="initial_pose_y" default="0.0"/>
+  <arg name="initial_pose_a" default="0.0"/>
+
+  <!-- 地图服务（可选，多机器人可以共享） -->
+  <arg name="map_file" default="$(find multi_smart_car)/maps/obstacle_map.yaml"/>
+
+  <!-- Move Base 节点 -->
+  <node pkg="move_base" type="move_base" respawn="false"
+        name="move_base" output="screen" clear_params="true">
+
+    <!-- 命名空间 -->
+    <rosparam ns="$(arg robot_namespace)">
+
+      <!-- 基础配置 -->
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+
+      <!-- 代价地图配置 -->
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml"
+                command="load" ns="global_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml"
+                command="load" ns="local_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/local_costmap_params.yaml"
+                command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml"
+                command="load"/>
+
+      <!-- Move base参数 -->
+      <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml"
+                command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml"
+                command="load"/>
+
+      <!-- 坐标系配置 -->
+      <param name="global_frame_id" value="$(arg robot_namespace)/map"/>
+      <param name="robot_base_frame" value="$(arg robot_namespace)/base_footprint"/>
+
+    </rosparam>
+
+    <!-- 话题重映射 -->
+    <remap from="cmd_vel" to="$(arg robot_namespace)/cmd_vel"/>
+    <remap from="move_base_simple/goal" to="$(arg robot_namespace)/move_base_simple/goal"/>
+
+  </node>
+
+</launch>

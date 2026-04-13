@@ -1,0 +1,298 @@
+<?xml version="1.0"?>
+<robot name="smart_car" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ==================== 多机器人参数 ==================== -->
+  <xacro:arg name="robot_namespace" default="robot1"/>
+
+  <!-- ==================== 参数 ==================== -->
+  <xacro:property name="M_PI" value="3.1415926"/>
+
+  <!-- 底盘参数 -->
+  <xacro:property name="chassis_lx"   value="0.40"/>
+  <xacro:property name="chassis_ly"   value="0.30"/>
+  <xacro:property name="chassis_lz"   value="0.08"/>
+  <xacro:property name="chassis_mass" value="4.0"/>
+
+  <!-- 轮子参数 -->
+  <xacro:property name="wheel_radius" value="0.06"/>
+  <xacro:property name="wheel_width"  value="0.04"/>
+  <xacro:property name="wheel_mass"   value="0.6"/>
+  <xacro:property name="wheel_sep"    value="0.34"/>
+
+  <!-- 万向轮参数 -->
+  <xacro:property name="caster_radius" value="0.01"/>
+  <xacro:property name="caster_mass"   value="0.1"/>
+
+  <!-- 传感器塔参数 -->
+  <xacro:property name="tower_lx" value="0.08"/>
+  <xacro:property name="tower_ly" value="0.08"/>
+  <xacro:property name="tower_lz" value="0.20"/>
+  <xacro:property name="tower_mass" value="0.3"/>
+
+  <!-- ==================== 材质 ==================== -->
+  <material name="orange">
+    <color rgba="0.92 0.48 0.08 1"/>
+  </material>
+  <material name="dark_gray">
+    <color rgba="0.18 0.18 0.18 1"/>
+  </material>
+  <material name="white">
+    <color rgba="0.92 0.92 0.92 1"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.12 0.35 0.82 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0 0 0 0.95"/>
+  </material>
+  <material name="yellow">
+    <color rgba="1 0.4 0 1"/>
+  </material>
+
+  <!-- ==================== 惯性计算宏 ==================== -->
+  <xacro:macro name="box_inertial_matrix" params="m l w h">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0"/>
+      <inertia
+        ixx="${m*(w*w+h*h)/12}" ixy="0" ixz="0"
+        iyy="${m*(l*l+h*h)/12}" iyz="0"
+        izz="${m*(l*l+w*w)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertial_matrix" params="m r h">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0"/>
+      <inertia
+        ixx="${m*(3*r*r+h*h)/12}" ixy="0" ixz="0"
+        iyy="${m*(3*r*r+h*h)/12}" iyz="0"
+        izz="${m*r*r/2}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="sphere_inertial_matrix" params="m r">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0"/>
+      <inertia
+        ixx="${2*m*r*r/5}" ixy="0" ixz="0"
+        iyy="${2*m*r*r/5}" iyz="0"
+        izz="${2*m*r*r/5}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ==================== 轮子宏（带命名空间前缀） ==================== -->
+  <xacro:macro name="wheel" params="prefix reflect ns">
+    <link name="${ns}_${prefix}_wheel">
+      <visual>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0"/>
+        <material name="dark_gray"/>
+      </visual>
+      <collision>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0"/>
+      </collision>
+      <xacro:cylinder_inertial_matrix m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+    </link>
+
+    <joint name="${ns}_${prefix}_wheel_joint" type="continuous">
+      <parent link="${ns}_base_link"/>
+      <child link="${ns}_${prefix}_wheel"/>
+      <origin xyz="0 ${reflect * wheel_sep/2} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.7" friction="0.1"/>
+    </joint>
+
+    <gazebo reference="${ns}_${prefix}_wheel">
+      <material>Gazebo/Dark</material>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- ==================== 万向轮宏（带命名空间前缀） ==================== -->
+  <xacro:macro name="caster" params="prefix reflect_x ns">
+    <link name="${ns}_${prefix}_caster">
+      <visual>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+        <origin xyz="0 0 0"/>
+        <material name="dark_gray"/>
+      </visual>
+      <collision>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+        <origin xyz="0 0 0"/>
+      </collision>
+      <xacro:sphere_inertial_matrix m="${caster_mass}" r="${caster_radius}"/>
+    </link>
+
+    <joint name="${ns}_${prefix}_caster_joint" type="continuous">
+      <parent link="${ns}_base_link"/>
+      <child link="${ns}_${prefix}_caster"/>
+      <origin xyz="${reflect_x * (chassis_lx/2 - 0.06)} 0 ${-chassis_lz/2 - caster_radius}"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <gazebo reference="${ns}_${prefix}_caster">
+      <material>Gazebo/Black</material>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- ==================== 传感器塔宏（带命名空间前缀） ==================== -->
+  <xacro:macro name="sensor_tower_macro" params="ns">
+    <link name="${ns}_sensor_tower">
+      <visual>
+        <geometry><box size="${tower_lx} ${tower_ly} ${tower_lz}"/></geometry>
+        <origin xyz="0 0 0"/>
+        <material name="blue"/>
+      </visual>
+      <collision>
+        <geometry><box size="${tower_lx} ${tower_ly} ${tower_lz}"/></geometry>
+        <origin xyz="0 0 0"/>
+      </collision>
+      <xacro:box_inertial_matrix m="${tower_mass}" l="${tower_lx}" w="${tower_ly}" h="${tower_lz}"/>
+    </link>
+
+    <joint name="${ns}_tower_joint" type="fixed">
+      <parent link="${ns}_base_link"/>
+      <child link="${ns}_sensor_tower"/>
+      <origin xyz="0 0 ${chassis_lz/2 + tower_lz/2}"/>
+    </joint>
+
+    <gazebo reference="${ns}_sensor_tower">
+      <material>Gazebo/Blue</material>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- ==================== 底盘主宏 ==================== -->
+  <xacro:macro name="smart_car_base" params="ns">
+
+    <!-- ========== base_footprint 坐标系 ========== -->
+    <link name="${ns}_base_footprint">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.001 0.001 0.001"/></geometry>
+      </visual>
+    </link>
+
+    <gazebo reference="${ns}_base_footprint">
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="${ns}_base_footprint_joint" type="fixed">
+      <origin xyz="0 0 ${chassis_lz/2 + wheel_radius}" rpy="0 0 0"/>
+      <parent link="${ns}_base_footprint"/>
+      <child link="${ns}_base_link"/>
+    </joint>
+
+    <!-- ========== 底盘主体 ========== -->
+    <link name="${ns}_base_link">
+      <visual>
+        <geometry><box size="${chassis_lx} ${chassis_ly} ${chassis_lz}"/></geometry>
+        <origin xyz="0 0 0"/>
+        <material name="orange"/>
+      </visual>
+      <collision>
+        <geometry><box size="${chassis_lx} ${chassis_ly} ${chassis_lz}"/></geometry>
+        <origin xyz="0 0 0"/>
+      </collision>
+      <xacro:box_inertial_matrix m="${chassis_mass}" l="${chassis_lx}" w="${chassis_ly}" h="${chassis_lz}"/>
+    </link>
+
+    <gazebo reference="${ns}_base_link">
+      <material>Gazebo/Orange</material>
+    </gazebo>
+
+    <!-- ========== 左右轮 ========== -->
+    <xacro:wheel prefix="left"  reflect="1" ns="${ns}"/>
+    <xacro:wheel prefix="right" reflect="-1" ns="${ns}"/>
+
+    <!-- ========== 前后万向轮 ========== -->
+    <xacro:caster prefix="front" reflect_x="1" ns="${ns}"/>
+    <xacro:caster prefix="rear"  reflect_x="-1" ns="${ns}"/>
+
+    <!-- ========== 传感器塔 ========== -->
+    <xacro:sensor_tower_macro ns="${ns}"/>
+
+    <!-- ========== 激光雷达安装座 ========== -->
+    <link name="${ns}_laser_mount">
+      <visual>
+        <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+        <material name="white"/>
+      </visual>
+      <collision>
+        <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+      </collision>
+      <xacro:cylinder_inertial_matrix m="0.15" r="0.035" h="0.04"/>
+    </link>
+
+    <joint name="${ns}_laser_mount_joint" type="fixed">
+      <parent link="${ns}_sensor_tower"/>
+      <child link="${ns}_laser_mount"/>
+      <origin xyz="0 0 0.12"/>
+    </joint>
+
+    <!-- ========== 差速驱动插件（参数化命名空间） ========== -->
+    <gazebo>
+      <plugin name="${ns}_diff_drive" filename="libgazebo_ros_diff_drive.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>50</updateRate>
+        <robotNamespace>/${ns}</robotNamespace>
+        <leftJoint>${ns}_left_wheel_joint</leftJoint>
+        <rightJoint>${ns}_right_wheel_joint</rightJoint>
+        <wheelSeparation>${wheel_sep}</wheelSeparation>
+        <wheelDiameter>${2*wheel_radius}</wheelDiameter>
+        <wheelTorque>5</wheelTorque>
+        <commandTopic>cmd_vel</commandTopic>
+        <odometryTopic>odom</odometryTopic>
+        <!-- 修改这里：使用带命名空间的odom坐标系 -->
+        <odometryFrame>${ns}/odom</odometryFrame>
+        <robotBaseFrame>${ns}_base_footprint</robotBaseFrame>
+        <publishWheelTF>false</publishWheelTF>
+        <publishWheelJointState>true</publishWheelJointState>
+        <publishTf>1</publishTf>
+      </plugin>
+    </gazebo>
+
+    <!-- ========== 激光雷达插件（参数化命名空间，360线） ========== -->
+    <gazebo reference="${ns}_laser_mount">
+      <sensor type="ray" name="${ns}_laser_scanner">
+        <always_on>true</always_on>
+        <updateRate>15</updateRate>
+        <visualize>true</visualize>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>72</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.14159</min_angle>
+              <max_angle>3.14159</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.08</min>
+            <max>8.0</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </ray>
+        <plugin name="${ns}_laser_plugin" filename="libgazebo_ros_laser.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>15</updateRate>
+          <robotNamespace>/${ns}</robotNamespace>
+          <topicName>scan</topicName>
+          <frameName>${ns}_laser_mount</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+  <!-- 调用底盘主宏，传入命名空间参数 -->
+  <xacro:smart_car_base ns="$(arg robot_namespace)"/>
+
+</robot>

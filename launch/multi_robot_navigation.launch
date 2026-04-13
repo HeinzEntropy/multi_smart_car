@@ -1,0 +1,197 @@
+<!-- multi_smart_car/launch/multi_robot_navigation.launch -->
+<launch>
+  <!-- 启动Gazebo仿真环境 -->
+  <include file="$(find multi_smart_car)/launch/gazebo_multi_robot.launch"/>
+
+  <!-- ========== 机器人1的导航系统 ========== -->
+  <group ns="robot1">
+    <!-- AMCL定位 -->
+    <node pkg="amcl" type="amcl" name="amcl" output="screen" clear_params="true">
+      <param name="use_map_topic" value="true"/>
+      <param name="min_particles" value="500"/>
+      <param name="max_particles" value="3000"/>
+      <param name="kld_err" value="0.02"/>
+      <param name="update_min_d" value="0.20"/>
+      <param name="update_min_a" value="0.20"/>
+      <param name="resample_interval" value="1"/>
+      <param name="transform_tolerance" value="0.5"/>
+      <param name="recovery_alpha_slow" value="0.00"/>
+      <param name="recovery_alpha_fast" value="0.00"/>
+      <param name="initial_pose_x" value="0.0"/>
+      <param name="initial_pose_y" value="0.0"/>
+      <param name="initial_pose_a" value="0.0"/>
+      <param name="gui_publish_rate" value="50.0"/>
+      <param name="laser_max_range" value="3.5"/>
+      <param name="laser_max_beams" value="180"/>
+      <param name="laser_z_hit" value="0.5"/>
+      <param name="laser_z_short" value="0.05"/>
+      <param name="laser_z_max" value="0.05"/>
+      <param name="laser_z_rand" value="0.5"/>
+      <param name="laser_sigma_hit" value="0.2"/>
+      <param name="laser_lambda_short" value="0.1"/>
+      <param name="laser_likelihood_max_dist" value="2.0"/>
+      <param name="laser_model_type" value="likelihood_field"/>
+      <param name="odom_model_type" value="diff"/>
+      <param name="odom_alpha1" value="0.1"/>
+      <param name="odom_alpha2" value="0.1"/>
+      <param name="odom_alpha3" value="0.1"/>
+      <param name="odom_alpha4" value="0.1"/>
+      <!-- 坐标系配置 -->
+      <param name="global_frame_id" value="map"/>
+      <param name="odom_frame_id" value="robot1/odom"/>
+      <param name="base_frame_id" value="robot1_base_footprint"/>
+      <remap from="map" to="/map"/>
+    </node>
+
+    <!-- Move Base导航 -->
+    <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
+
+      <!-- 代价地图坐标系配置 -->
+      <param name="global_costmap/global_frame" value="map"/>
+      <param name="global_costmap/robot_base_frame" value="robot1_base_footprint"/>
+      <param name="local_costmap/global_frame" value="robot1/odom"/>
+      <param name="local_costmap/robot_base_frame" value="robot1_base_footprint"/>
+
+      <remap from="cmd_vel" to="cmd_vel"/>
+      <remap from="map" to="/map"/>
+    </node>
+  </group>
+
+  <!-- ========== 机器人2的导航系统 ========== -->
+  <group ns="robot2">
+    <!-- AMCL定位 -->
+    <node pkg="amcl" type="amcl" name="amcl" output="screen" clear_params="true">
+      <param name="use_map_topic" value="true"/>
+      <param name="min_particles" value="500"/>
+      <param name="max_particles" value="3000"/>
+      <param name="kld_err" value="0.02"/>
+      <param name="update_min_d" value="0.20"/>
+      <param name="update_min_a" value="0.20"/>
+      <param name="resample_interval" value="1"/>
+      <param name="transform_tolerance" value="0.5"/>
+      <param name="recovery_alpha_slow" value="0.00"/>
+      <param name="recovery_alpha_fast" value="0.00"/>
+      <param name="initial_pose_x" value="2.0"/>
+      <param name="initial_pose_y" value="0.0"/>
+      <param name="initial_pose_a" value="0.0"/>
+      <param name="gui_publish_rate" value="50.0"/>
+      <param name="laser_max_range" value="3.5"/>
+      <param name="laser_max_beams" value="180"/>
+      <param name="laser_z_hit" value="0.5"/>
+      <param name="laser_z_short" value="0.05"/>
+      <param name="laser_z_max" value="0.05"/>
+      <param name="laser_z_rand" value="0.5"/>
+      <param name="laser_sigma_hit" value="0.2"/>
+      <param name="laser_lambda_short" value="0.1"/>
+      <param name="laser_likelihood_max_dist" value="2.0"/>
+      <param name="laser_model_type" value="likelihood_field"/>
+      <param name="odom_model_type" value="diff"/>
+      <param name="odom_alpha1" value="0.1"/>
+      <param name="odom_alpha2" value="0.1"/>
+      <param name="odom_alpha3" value="0.1"/>
+      <param name="odom_alpha4" value="0.1"/>
+      <!-- 坐标系配置 -->
+      <param name="global_frame_id" value="map"/>
+      <param name="odom_frame_id" value="robot2/odom"/>
+      <param name="base_frame_id" value="robot2_base_footprint"/>
+      <remap from="map" to="/map"/>
+    </node>
+
+    <!-- Move Base导航 -->
+    <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
+
+      <!-- 代价地图坐标系配置 -->
+      <param name="global_costmap/global_frame" value="map"/>
+      <param name="global_costmap/robot_base_frame" value="robot2_base_footprint"/>
+      <param name="local_costmap/global_frame" value="robot2/odom"/>
+      <param name="local_costmap/robot_base_frame" value="robot2_base_footprint"/>
+
+      <remap from="cmd_vel" to="cmd_vel"/>
+      <remap from="map" to="/map"/>
+    </node>
+  </group>
+
+  <!-- ========== 机器人3的导航系统 ========== -->
+  <group ns="robot3">
+    <!-- AMCL定位 -->
+    <node pkg="amcl" type="amcl" name="amcl" output="screen" clear_params="true">
+      <param name="use_map_topic" value="true"/>
+      <param name="min_particles" value="500"/>
+      <param name="max_particles" value="3000"/>
+      <param name="kld_err" value="0.02"/>
+      <param name="update_min_d" value="0.20"/>
+      <param name="update_min_a" value="0.20"/>
+      <param name="resample_interval" value="1"/>
+      <param name="transform_tolerance" value="0.5"/>
+      <param name="recovery_alpha_slow" value="0.00"/>
+      <param name="recovery_alpha_fast" value="0.00"/>
+      <param name="initial_pose_x" value="4.0"/>
+      <param name="initial_pose_y" value="0.0"/>
+      <param name="initial_pose_a" value="0.0"/>
+      <param name="gui_publish_rate" value="50.0"/>
+      <param name="laser_max_range" value="3.5"/>
+      <param name="laser_max_beams" value="180"/>
+      <param name="laser_z_hit" value="0.5"/>
+      <param name="laser_z_short" value="0.05"/>
+      <param name="laser_z_max" value="0.05"/>
+      <param name="laser_z_rand" value="0.5"/>
+      <param name="laser_sigma_hit" value="0.2"/>
+      <param name="laser_lambda_short" value="0.1"/>
+      <param name="laser_likelihood_max_dist" value="2.0"/>
+      <param name="laser_model_type" value="likelihood_field"/>
+      <param name="odom_model_type" value="diff"/>
+      <param name="odom_alpha1" value="0.1"/>
+      <param name="odom_alpha2" value="0.1"/>
+      <param name="odom_alpha3" value="0.1"/>
+      <param name="odom_alpha4" value="0.1"/>
+      <!-- 坐标系配置 -->
+      <param name="global_frame_id" value="map"/>
+      <param name="odom_frame_id" value="robot3/odom"/>
+      <param name="base_frame_id" value="robot3_base_footprint"/>
+      <remap from="map" to="/map"/>
+    </node>
+
+    <!-- Move Base导航 -->
+    <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
+
+      <!-- 代价地图坐标系配置 -->
+      <param name="global_costmap/global_frame" value="map"/>
+      <param name="global_costmap/robot_base_frame" value="robot3_base_footprint"/>
+      <param name="local_costmap/global_frame" value="robot3/odom"/>
+      <param name="local_costmap/robot_base_frame" value="robot3_base_footprint"/>
+
+      <remap from="cmd_vel" to="cmd_vel"/>
+      <remap from="map" to="/map"/>
+    </node>
+  </group>
+
+  <!-- ========== 编队控制器 ========== -->
+  <node name="formation_controller" pkg="multi_smart_car"
+        type="formation_controller.py" output="screen">
+    <param name="formation_type" value="v_shape"/>
+    <param name="formation_distance" value="1.5"/>
+    <param name="num_robots" value="3"/>
+  </node>
+
+</launch>

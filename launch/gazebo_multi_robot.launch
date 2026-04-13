@@ -1,0 +1,78 @@
+<!-- multi_smart_car/launch/gazebo_multi_robot.launch -->
+<launch>
+  <!-- 世界文件 -->
+  <arg name="world_file" default="$(find multi_smart_car)/world/obstacle.world"/>
+
+  <!-- Gazebo参数 -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <!-- 启动Gazebo -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_file)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <!-- 加载地图服务器（共享） -->
+  <node name="map_server" pkg="map_server" type="map_server"
+        args="$(find multi_smart_car)/maps/obstacle_map.yaml" output="screen"/>
+
+  <!-- ========== 机器人1 ========== -->
+  <group ns="robot1">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find multi_smart_car)/urdf/smart_car_multi.xacro'
+                   robot_namespace:=robot1"/>
+
+    <node name="spawn_robot1" pkg="gazebo_ros" type="spawn_model" respawn="false"
+          output="screen"
+          args="-urdf -model robot1 -param robot_description -x 0.0 -y 0.0 -z 0.01 -Y 0.0"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="publish_frequency" type="double" value="50.0"/>
+    </node>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  </group>
+
+  <!-- ========== 机器人2 ========== -->
+  <group ns="robot2">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find multi_smart_car)/urdf/smart_car_multi.xacro'
+                   robot_namespace:=robot2"/>
+
+    <node name="spawn_robot2" pkg="gazebo_ros" type="spawn_model" respawn="false"
+          output="screen"
+          args="-urdf -model robot2 -param robot_description -x 2.0 -y 0.0 -z 0.01 -Y 0.0"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="publish_frequency" type="double" value="50.0"/>
+    </node>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  </group>
+
+  <!-- ========== 机器人3 ========== -->
+  <group ns="robot3">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find multi_smart_car)/urdf/smart_car_multi.xacro'
+                   robot_namespace:=robot3"/>
+
+    <node name="spawn_robot3" pkg="gazebo_ros" type="spawn_model" respawn="false"
+          output="screen"
+          args="-urdf -model robot3 -param robot_description -x 4.0 -y 0.0 -z 0.01 -Y 0.0"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="publish_frequency" type="double" value="50.0"/>
+    </node>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  </group>
+
+</launch>
