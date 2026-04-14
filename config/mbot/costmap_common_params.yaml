@@ -36,7 +36,7 @@ proxemic_layer:
   # 不需要在 observation_sources 中声明，它是一个独立的图层
 
   # 社会距离参数
-  amplitude: 200.0        # 社会距离影响范围
+  amplitude: 254.0        # 社会距离影响范围
   sigma: 1.0              # 高斯分布标准差，控制障碍物影响范围
   cutoff: 3.0             # 代价值衰减到0的距离（米）
   factor: 255.0           # 代价值缩放因子
