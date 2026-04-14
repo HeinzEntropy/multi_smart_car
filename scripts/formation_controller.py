@@ -6,9 +6,11 @@ import numpy as np
 import math
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import LaserScan
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import tf
+
+# 用于 ProxemicLayer
+from people_msgs.msg import PositionMeasurementArray, PositionMeasurement
 
 class FormationController:
     def __init__(self):
@@ -20,14 +22,7 @@ class FormationController:
         self.num_robots = rospy.get_param('~num_robots', 3)
 
         # 机器人参数
-        self.robot_radius = rospy.get_param('~robot_radius', 0.175)  # 从你的footprint计算
-
-        # 激光雷达参数（从你的配置文件获取）
-        self.scan_angle_min = rospy.get_param('~scan_angle_min', -math.pi)
-        self.scan_angle_max = rospy.get_param('~scan_angle_max', math.pi)
-        self.scan_angle_increment = rospy.get_param('~scan_angle_increment', math.pi/72)  # 2.5度增量
-        self.scan_range_min = rospy.get_param('~scan_range_min', 0.1)
-        self.scan_range_max = rospy.get_param('~scan_range_max', 10.0)
+        self.robot_radius = rospy.get_param('~robot_radius', 0.175)
 
         # 机器人命名空间列表
         self.robot_namespaces = [f'robot{i+1}' for i in range(self.num_robots)]
@@ -49,11 +44,11 @@ class FormationController:
             self.goal_publishers[ns] = rospy.Publisher(
                 f'/{ns}/move_base_simple/goal', PoseStamped, queue_size=10)
 
-        # 为每个机器人发布虚拟障碍物
-        self.virtual_scan_publishers = {}
+        # 为每个机器人发布 people 消息（给 ProxemicLayer）
+        self.people_publishers = {}
         for ns in self.robot_namespaces:
-            self.virtual_scan_publishers[ns] = rospy.Publisher(
-                f'/{ns}/virtual_obstacle_scan', LaserScan, queue_size=10)
+            self.people_publishers[ns] = rospy.Publisher(
+                f'/{ns}/people', PositionMeasurementArray, queue_size=10)
 
         # 主机器人目标点订阅
         rospy.Subscriber('/robot1/move_base_simple/goal', PoseStamped, self.master_goal_cb)
@@ -64,11 +59,7 @@ class FormationController:
         # TF监听器
         self.tf_listener = tf.TransformListener()
 
-        # 控制频率
-        self.formation_rate = rospy.Rate(5)   # 编队控制频率 5Hz
-        self.obstacle_rate = rospy.Rate(10)   # 虚拟障碍物发布频率 10Hz
-
-        rospy.loginfo("Formation Controller with Obstacles Started")
+        rospy.loginfo("Formation Controller Started")
         rospy.loginfo(f"Formation Type: {self.formation_type}")
         rospy.loginfo(f"Formation Distance: {self.formation_distance}m")
         rospy.loginfo(f"Number of Robots: {self.num_robots}")
@@ -136,93 +127,11 @@ class FormationController:
 
         return follower_pose
 
-    def generate_virtual_obstacle_scan(self, target_robot_namespace):
-        """
-        为指定机器人生成虚拟障碍物扫描（包含其他所有机器人）
-
-        参数:
-            target_robot_namespace: 目标机器人命名空间
-
-        返回:
-            scan: LaserScan消息
-        """
-        # 检查目标机器人位姿是否可用
-        if target_robot_namespace not in self.robot_poses:
-            return None
-
-        # 获取目标机器人位姿
-        target_pose = self.robot_poses[target_robot_namespace]
-        target_x = target_pose.pose.position.x
-        target_y = target_pose.pose.position.y
-        q = target_pose.pose.orientation
-        _, _, target_theta = euler_from_quaternion([q.x, q.y, q.z, q.w])
-
-        # 创建激光扫描消息
-        scan = LaserScan()
-        scan.header.stamp = rospy.Time.now()
-        scan.header.frame_id = f"{target_robot_namespace}_laser_mount"
-        scan.angle_min = self.scan_angle_min
-        scan.angle_max = self.scan_angle_max
-        scan.angle_increment = self.scan_angle_increment
-        scan.time_increment = 0.0
-        scan.scan_time = 0.1
-        scan.range_min = self.scan_range_min
-        scan.range_max = self.scan_range_max
-
-        # 初始化所有距离为无穷大
-        num_readings = int((scan.angle_max - scan.angle_min) / scan.angle_increment)
-        scan.ranges = [self.scan_range_max] * num_readings
-        scan.intensities = [0.0] * num_readings
-
-        # 遍历所有其他机器人，生成虚拟障碍物
-        for other_namespace in self.robot_namespaces:
-            # 跳过自己
-            if other_namespace == target_robot_namespace:
-                continue
-
-            # 检查其他机器人位姿是否可用
-            if other_namespace not in self.robot_poses:
-                continue
-
-            # 获取其他机器人位姿
-            other_pose = self.robot_poses[other_namespace]
-            other_x = other_pose.pose.position.x
-            other_y = other_pose.pose.position.y
-
-            # 计算相对位置（从目标机器人到其他机器人）
-            dx = other_x - target_x
-            dy = other_y - target_y
-
-            # 转换到目标机器人的局部坐标系
-            local_x = dx * math.cos(target_theta) + dy * math.sin(target_theta)
-            local_y = -dx * math.sin(target_theta) + dy * math.cos(target_theta)
-
-            # 计算距离和角度
-            distance = math.sqrt(local_x**2 + local_y**2)
-            angle = math.atan2(local_y, local_x)
-
-            # 检查是否在扫描范围内
-            if self.scan_angle_min <= angle <= self.scan_angle_max:
-                # 将角度转换为索引
-                angle_index = int((angle - self.scan_angle_min) / self.scan_angle_increment)
-
-                if 0 <= angle_index < num_readings:
-                    # 考虑机器人半径（障碍物在机器人边缘）
-                    obstacle_distance = distance - self.robot_radius
-
-                    if obstacle_distance > self.scan_range_min:
-                        # 如果这个角度已经有更近的障碍物，保留更近的
-                        if obstacle_distance < scan.ranges[angle_index]:
-                            scan.ranges[angle_index] = obstacle_distance
-
-        return scan
-
     def update_formation(self):
         """更新编队（发布目标点）"""
         if self.master_goal is None:
             return
 
-        # 为主机器人发布目标
         master_namespace = self.robot_namespaces[0]
         if master_namespace not in self.robot_poses:
             rospy.logwarn_throttle(5, "Master robot pose not available")
@@ -230,48 +139,64 @@ class FormationController:
 
         self.goal_publishers[master_namespace].publish(self.master_goal)
 
-        # 为每个从机器人计算并发布目标
         for i, namespace in enumerate(self.robot_namespaces[1:], start=1):
             follower_goal = self.calculate_follower_goal(self.master_goal, i - 1)
             self.goal_publishers[namespace].publish(follower_goal)
 
-    def publish_virtual_obstacles(self):
-        """为所有机器人发布虚拟障碍物"""
-        for namespace in self.robot_namespaces:
-            # 生成虚拟障碍物扫描
-            virtual_scan = self.generate_virtual_obstacle_scan(namespace)
+    def publish_teammates_as_people(self):
+        """为每个机器人发布队友位置，供 ProxemicLayer 使用"""
+        for target_ns in self.robot_namespaces:
+            if target_ns not in self.robot_poses:
+                continue
 
-            if virtual_scan is not None:
-                # 发布虚拟障碍物
-                self.virtual_scan_publishers[namespace].publish(virtual_scan)
+            people_array = PositionMeasurementArray()
+            people_array.header.stamp = rospy.Time.now()
+            people_array.header.frame_id = "map"
 
-                # 调试信息（可选）
-                obstacle_count = sum(1 for r in virtual_scan.ranges if r != float('inf'))
-                if obstacle_count > 0:
-                    rospy.logdebug(f"Published {obstacle_count} virtual obstacles for {namespace}")
+            for other_ns in self.robot_namespaces:
+                if other_ns == target_ns:
+                    continue
+                if other_ns not in self.robot_poses:
+                    continue
+
+                other_pose = self.robot_poses[other_ns]
+
+                person = PositionMeasurement()
+                person.header.stamp = rospy.Time.now()
+                person.header.frame_id = "map"
+                person.name = other_ns
+                person.object_id = other_ns
+                person.pos = other_pose.pose.position
+                person.covariance = [0.1, 0.0, 0.0,
+                                     0.0, 0.1, 0.0,
+                                     0.0, 0.0, 0.1]
+                person.reliability = 0.9
+
+                people_array.people.append(person)
+
+            if len(people_array.people) > 0:
+                self.people_publishers[target_ns].publish(people_array)
 
     def run(self):
         """主循环"""
-        rospy.loginfo("Formation controller with obstacles running...")
+        rospy.loginfo("Formation controller running...")
 
-        # 初始化定时器
         last_formation_update = rospy.Time.now()
-        last_obstacle_update = rospy.Time.now()
+        last_people_update = rospy.Time.now()
 
         while not rospy.is_shutdown():
             current_time = rospy.Time.now()
 
             # 更新编队目标点（5Hz）
-            if (current_time - last_formation_update).to_sec() >= 0.2:  # 5Hz
+            if (current_time - last_formation_update).to_sec() >= 0.2:
                 self.update_formation()
                 last_formation_update = current_time
 
-            # 发布虚拟障碍物（10Hz）
-            if (current_time - last_obstacle_update).to_sec() >= 0.1:  # 10Hz
-                self.publish_virtual_obstacles()
-                last_obstacle_update = current_time
+            # 发布 people 消息（10Hz）
+            if (current_time - last_people_update).to_sec() >= 0.1:
+                self.publish_teammates_as_people()
+                last_people_update = current_time
 
-            # 短暂休眠
             rospy.sleep(0.01)
 
 if __name__ == '__main__':
