@@ -14,23 +14,12 @@
       <arg name="base_frame_id" value="robot1_base_footprint"/>
     </include>
 
-    <!-- Move Base导航 (保持原样，后续可同样模块化) -->
-    <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
-      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
-      <param name="global_costmap/global_frame" value="map"/>
-      <param name="global_costmap/robot_base_frame" value="robot1_base_footprint"/>
-      <param name="local_costmap/global_frame" value="robot1/odom"/>
-      <param name="local_costmap/robot_base_frame" value="robot1_base_footprint"/>
-      <remap from="cmd_vel" to="cmd_vel"/>
-      <remap from="map" to="/map"/>
-      <remap from="/people" to="/robot1/people"/>
-    </node>
+    <!-- 包含参数化的move_base启动文件 -->
+    <include file="$(find multi_smart_car)/launch/movebase_multi.launch">
+      <arg name="robot_base_frame" value="robot1_base_footprint"/>
+      <arg name="odom_frame" value="robot1/odom"/>
+      <arg name="people_topic" value="/robot1/people"/>
+    </include>
   </group>
 
   <!-- ========== 机器人2的导航系统 ========== -->
@@ -44,23 +33,12 @@
       <arg name="base_frame_id" value="robot2_base_footprint"/>
     </include>
 
-    <!-- Move Base导航 -->
-    <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
-      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
-      <param name="global_costmap/global_frame" value="map"/>
-      <param name="global_costmap/robot_base_frame" value="robot2_base_footprint"/>
-      <param name="local_costmap/global_frame" value="robot2/odom"/>
-      <param name="local_costmap/robot_base_frame" value="robot2_base_footprint"/>
-      <remap from="cmd_vel" to="cmd_vel"/>
-      <remap from="map" to="/map"/>
-      <remap from="/people" to="/robot2/people"/>
-    </node>
+    <!-- 包含参数化的move_base启动文件 -->
+    <include file="$(find multi_smart_car)/launch/movebase_multi.launch">
+      <arg name="robot_base_frame" value="robot2_base_footprint"/>
+      <arg name="odom_frame" value="robot2/odom"/>
+      <arg name="people_topic" value="/robot2/people"/>
+    </include>
   </group>
 
   <!-- ========== 机器人3的导航系统 ========== -->
@@ -74,23 +52,12 @@
       <arg name="base_frame_id" value="robot3_base_footprint"/>
     </include>
 
-    <!-- Move Base导航 -->
-    <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
-      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
-      <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
-      <rosparam file="$(find multi_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
-      <param name="global_costmap/global_frame" value="map"/>
-      <param name="global_costmap/robot_base_frame" value="robot3_base_footprint"/>
-      <param name="local_costmap/global_frame" value="robot3/odom"/>
-      <param name="local_costmap/robot_base_frame" value="robot3_base_footprint"/>
-      <remap from="cmd_vel" to="cmd_vel"/>
-      <remap from="map" to="/map"/>
-      <remap from="/people" to="/robot3/people"/>
-    </node>
+    <!-- 包含参数化的move_base启动文件 -->
+    <include file="$(find multi_smart_car)/launch/movebase_multi.launch">
+      <arg name="robot_base_frame" value="robot3_base_footprint"/>
+      <arg name="odom_frame" value="robot3/odom"/>
+      <arg name="people_topic" value="/robot3/people"/>
+    </include>
   </group>
 
   <!-- ========== 编队控制器 ========== -->

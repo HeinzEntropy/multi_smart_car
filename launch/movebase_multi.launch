@@ -1,0 +1,32 @@
+<!-- multi_smart_car/launch/movebase_multi.launch -->
+<launch>
+  <!-- 定义输入参数 -->
+  <arg name="robot_base_frame" />      <!-- 例如: robot1_base_footprint -->
+  <arg name="odom_frame" />            <!-- 例如: robot1/odom -->
+  <arg name="people_topic" />          <!-- 例如: /robot1/people -->
+
+  <!-- 直接启动move_base节点 -->
+  <node pkg="move_base" type="move_base" name="move_base" output="screen" clear_params="true">
+    <!-- 基本配置 -->
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+
+    <!-- 加载代价地图配置文件 -->
+    <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+    <rosparam file="$(find multi_smart_car)/config/mbot/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+    <rosparam file="$(find my_smart_car)/config/mbot/global_costmap_params.yaml" command="load"/>
+    <rosparam file="$(find my_smart_car)/config/mbot/move_base_params.yaml" command="load"/>
+    <rosparam file="$(find my_smart_car)/config/mbot/dwa_local_planner_params.yaml" command="load"/>
+    <rosparam file="$(find multi_smart_car)/config/mbot/local_costmap_params.yaml" command="load"/>
+
+    <!-- 动态设置的参数 -->
+    <param name="global_costmap/global_frame" value="map"/>
+    <param name="global_costmap/robot_base_frame" value="$(arg robot_base_frame)"/>
+    <param name="local_costmap/global_frame" value="$(arg odom_frame)"/>
+    <param name="local_costmap/robot_base_frame" value="$(arg robot_base_frame)"/>
+
+    <!-- 话题重映射 -->
+    <remap from="cmd_vel" to="cmd_vel"/>
+    <remap from="map" to="/map"/>
+    <remap from="/people" to="$(arg people_topic)"/>
+  </node>
+</launch>
