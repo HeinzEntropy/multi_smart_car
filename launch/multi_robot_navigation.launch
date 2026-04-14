@@ -61,8 +61,7 @@
       <remap from="cmd_vel" to="cmd_vel"/>
       <remap from="map" to="/map"/>
       <!-- 【新增】ProxemicLayer 重映射：将 people 话题指向 robot1 的绝对路径 -->
-      <remap from="global_costmap/proxemic_layer/people" to="/robot1/people"/>
-      <remap from="local_costmap/proxemic_layer/people" to="/robot1/people"/>
+      <remap from="/people" to="/robot1/people"/>
     </node>
   </group>
 
@@ -124,8 +123,7 @@
       <remap from="cmd_vel" to="cmd_vel"/>
       <remap from="map" to="/map"/>
       <!-- 【新增】ProxemicLayer 重映射：将 people 话题指向 robot2 的绝对路径 -->
-      <remap from="global_costmap/proxemic_layer/people" to="/robot2/people"/>
-      <remap from="local_costmap/proxemic_layer/people" to="/robot2/people"/>
+      <remap from="/people" to="/robot2/people"/>
     </node>
   </group>
 
@@ -187,15 +185,14 @@
       <remap from="cmd_vel" to="cmd_vel"/>
       <remap from="map" to="/map"/>
       <!-- 【新增】ProxemicLayer 重映射：将 people 话题指向 robot3 的绝对路径 -->
-      <remap from="global_costmap/proxemic_layer/people" to="/robot3/people"/>
-      <remap from="local_costmap/proxemic_layer/people" to="/robot3/people"/>
+      <remap from="/people" to="/robot3/people"/>
     </node>
   </group>
 
   <!-- ========== 编队控制器 ========== -->
   <node name="formation_controller" pkg="multi_smart_car"
         type="formation_controller.py" output="screen">
-    <param name="formation_type" value="v_shape"/>
+    <param name="formation_type" value="line"/>
     <param name="formation_distance" value="1.5"/>
     <param name="num_robots" value="3"/>
   </node>

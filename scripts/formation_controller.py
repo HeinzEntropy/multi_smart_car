@@ -9,8 +9,8 @@ from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import tf
 
-# 用于 ProxemicLayer
-from people_msgs.msg import PositionMeasurementArray, PositionMeasurement
+# 导入 people_msgs - 使用 People 和 Person 类型
+from people_msgs.msg import People, Person
 
 class FormationController:
     def __init__(self):
@@ -44,11 +44,11 @@ class FormationController:
             self.goal_publishers[ns] = rospy.Publisher(
                 f'/{ns}/move_base_simple/goal', PoseStamped, queue_size=10)
 
-        # 为每个机器人发布 people 消息（给 ProxemicLayer）
+        # 【关键修改】为每个机器人发布 people 消息（使用 People 类型）
         self.people_publishers = {}
         for ns in self.robot_namespaces:
             self.people_publishers[ns] = rospy.Publisher(
-                f'/{ns}/people', PositionMeasurementArray, queue_size=10)
+                f'/{ns}/people', People, queue_size=10)
 
         # 主机器人目标点订阅
         rospy.Subscriber('/robot1/move_base_simple/goal', PoseStamped, self.master_goal_cb)
@@ -143,44 +143,60 @@ class FormationController:
             follower_goal = self.calculate_follower_goal(self.master_goal, i - 1)
             self.goal_publishers[namespace].publish(follower_goal)
 
+    # 【关键修改】发布队友位置为 People 类型
     def publish_teammates_as_people(self):
         """为每个机器人发布队友位置，供 ProxemicLayer 使用"""
         for target_ns in self.robot_namespaces:
             if target_ns not in self.robot_poses:
                 continue
 
-            people_array = PositionMeasurementArray()
-            people_array.header.stamp = rospy.Time.now()
-            people_array.header.frame_id = "map"
+            # 创建 People 消息
+            people_msg = People()
+            people_msg.header.stamp = rospy.Time.now()
+            people_msg.header.frame_id = "map"
 
+            # 遍历其他机器人，将它们作为"人"添加
             for other_ns in self.robot_namespaces:
+                # 跳过自身
                 if other_ns == target_ns:
                     continue
+                # 跳过没有位姿的机器人
                 if other_ns not in self.robot_poses:
                     continue
 
                 other_pose = self.robot_poses[other_ns]
 
-                person = PositionMeasurement()
-                person.header.stamp = rospy.Time.now()
-                person.header.frame_id = "map"
+                # 创建 Person（只有这些字段）
+                person = Person()
                 person.name = other_ns
-                # person.object_id = other_ns
-                person.pos = other_pose.pose.position
-                person.covariance = [0.1, 0.0, 0.0,
-                                     0.0, 0.1, 0.0,
-                                     0.0, 0.0, 0.1]
-                person.reliability = 0.9
-                person.initialization = 0  # 【新增】这个字段也需要
-                people_array.people.append(person)
+                person.position = other_pose.pose.position
 
-            if len(people_array.people) > 0:
-                self.people_publishers[target_ns].publish(people_array)
+                # 设置速度（如果有odom数据）
+                if other_ns in self.robot_velocities:
+                    vel = self.robot_velocities[other_ns]
+                    person.velocity.x = vel.linear.x
+                    person.velocity.y = vel.linear.y
+                    person.velocity.z = 0.0
+                else:
+                    person.velocity.x = 0.0
+                    person.velocity.y = 0.0
+                    person.velocity.z = 0.0
+
+                # 设置可靠性
+                person.reliability = 0.9
+
+                # 添加到数组
+                people_msg.people.append(person)
+
+            # 发布到该机器人的 people 话题
+            if len(people_msg.people) > 0:
+                self.people_publishers[target_ns].publish(people_msg)
 
     def run(self):
         """主循环"""
         rospy.loginfo("Formation controller running...")
 
+        # 初始化定时器
         last_formation_update = rospy.Time.now()
         last_people_update = rospy.Time.now()
 
@@ -188,15 +204,16 @@ class FormationController:
             current_time = rospy.Time.now()
 
             # 更新编队目标点（5Hz）
-            if (current_time - last_formation_update).to_sec() >= 0.2:
+            if (current_time - last_formation_update).to_sec() >= 0.2:  # 5Hz
                 self.update_formation()
                 last_formation_update = current_time
 
             # 发布 people 消息（10Hz）
-            if (current_time - last_people_update).to_sec() >= 0.1:
+            if (current_time - last_people_update).to_sec() >= 0.1:  # 10Hz
                 self.publish_teammates_as_people()
                 last_people_update = current_time
 
+            # 短暂休眠
             rospy.sleep(0.01)
 
 if __name__ == '__main__':
