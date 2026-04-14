@@ -165,13 +165,13 @@ class FormationController:
                 person.header.stamp = rospy.Time.now()
                 person.header.frame_id = "map"
                 person.name = other_ns
-                person.object_id = other_ns
+                # person.object_id = other_ns
                 person.pos = other_pose.pose.position
                 person.covariance = [0.1, 0.0, 0.0,
                                      0.0, 0.1, 0.0,
                                      0.0, 0.0, 0.1]
                 person.reliability = 0.9
-
+                person.initialization = 0  # 【新增】这个字段也需要
                 people_array.people.append(person)
 
             if len(people_array.people) > 0:

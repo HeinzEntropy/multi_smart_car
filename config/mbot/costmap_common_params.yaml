@@ -2,7 +2,6 @@
 obstacle_range: 2.5
 raytrace_range: 10.0
 footprint: [[0.175, 0.175], [0.175, -0.175], [-0.175, -0.175], [-0.175, 0.175]]
-#footprint_inflation: 0.01
 robot_radius: 0.4
 inflation_radius: 0.8
 cost_scaling_factor: 3.0
@@ -10,26 +9,49 @@ cost_scaling_factor: 3.0
 lethal_cost_threshold: 1
 
 map_type: costmap
-#transform_tolerance: 1
-observation_sources: scan virtual_obstacles
-scan: {data_type: LaserScan, topic: smart_car/scan, marking: true, clearing: true}
 
-# 显式设置 observation_sources，覆盖 my_smart_car 的配置
-obstacle_layer:
+# 【新增】plugins 配置
+plugins:
+  - {name: static_layer, type: "costmap_2d::StaticLayer"}
+  - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+  - {name: proxemic_layer, type: "social_navigation_layers::ProxemicLayer"}
+  - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
+# 【修改】observation_sources 只保留 scan，移除 virtual_obstacles
+observation_sources: scan
+
+scan:
+  data_type: LaserScan
+  topic: smart_car/scan
+  marking: true
+  clearing: true
+
+# 【删除】整个 obstacle_layer 配置块（原来包含 virtual_obstacles）
+# 【删除】virtual_obstacles 相关的所有配置
+
+# 【新增】ProxemicLayer 配置
+proxemic_layer:
   enabled: true
-  combination_method: 1
-  observation_sources: scan virtual_obstacles  # 使用 scan（已有的）和 virtual_obstacles
+  # ProxemicLayer 会订阅每个机器人自己的 /{ns}/people 话题
+  # 不需要在 observation_sources 中声明，它是一个独立的图层
 
-  scan:
-    data_type: LaserScan
-    topic: smart_car/scan
-    marking: true
-    clearing: true
+  # 社会距离参数
+  sigma: 1.0              # 高斯分布标准差，控制障碍物影响范围
+  cutoff: 3.0             # 代价值衰减到0的距离（米）
+  factor: 255.0           # 代价值缩放因子
 
-  virtual_obstacles:
-    data_type: LaserScan
-    topic: virtual_obstacle_scan
-    marking: true
-    clearing: true
-    obstacle_keep_time: 0.5
-    transform_tolerance: 0.3
+  # 可选参数
+  keep_time: 2.0          # 障碍物保持时间（秒），防止闪烁
+  use_repulsion: false    # 是否使用排斥区域
+  repulsion_sigma: 0.2    # 排斥区域标准差
+  repulsion_factor: 100.0  # 排斥区域因子
+
+  # 不使用激光或深度数据，我们通过 people 话题提供数据
+  use_scan: false
+  use_depth: false
+
+# 【可选】保留 inflation_layer 配置
+inflation_layer:
+  enabled: true
+  inflation_radius: 0.8
+  cost_scaling_factor: 3.0
