@@ -44,7 +44,7 @@ class FormationController:
             self.goal_publishers[ns] = rospy.Publisher(
                 f'/{ns}/move_base_simple/goal', PoseStamped, queue_size=10)
 
-        # 【关键修改】为每个机器人发布 people 消息（使用 People 类型）
+        # 为每个机器人发布 people 消息（使用 People 类型）
         self.people_publishers = {}
         for ns in self.robot_namespaces:
             self.people_publishers[ns] = rospy.Publisher(
@@ -143,7 +143,7 @@ class FormationController:
             follower_goal = self.calculate_follower_goal(self.master_goal, i - 1)
             self.goal_publishers[namespace].publish(follower_goal)
 
-    # 【关键修改】发布队友位置为 People 类型
+    # 发布队友位置为 People 类型
     def publish_teammates_as_people(self):
         """为每个机器人发布队友位置，供 ProxemicLayer 使用"""
         for target_ns in self.robot_namespaces:
